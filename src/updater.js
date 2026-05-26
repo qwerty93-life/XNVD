@@ -21,8 +21,8 @@
 const https = require('https');
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const GITHUB_OWNER = 'YourGitHubUsername';   // ← change this
-const GITHUB_REPO  = 'xnvd-launcher';        // ← change this if different
+const GITHUB_OWNER = 'qwerty93-life';   // ← change this
+const GITHUB_REPO  = 'XNVD';        // ← change this if different
 
 const CURRENT_VERSION  = require('../package.json').version;
 const API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
