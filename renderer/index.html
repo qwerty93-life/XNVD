@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src * data: blob:">
+  <title>XNVD</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="titlebar">
+    <div class="tb-drag"></div>
+    <div class="tb-brand">XNVD LAUNCHER</div>
+    <div class="tb-drag"></div>
+    <div class="tb-controls">
+      <button id="btn-min">
+        <svg width="11" height="1" viewBox="0 0 11 1"><rect width="11" height="1.5" fill="currentColor" rx="1"/></svg>
+      </button>
+      <button id="btn-max">
+        <svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2" rx="1"/></svg>
+      </button>
+      <button id="btn-close" class="btn-x">
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          <line x1=".5" y1=".5" x2="9.5" y2="9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="9.5" y1=".5" x2=".5" y2="9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Update notification banner (hidden until update found) -->
+  <div id="update-bar" class="update-bar hidden">
+    <div class="update-bar-inner">
+      <div class="update-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      </div>
+      <span class="update-text">
+        <strong id="update-version-label">Version 1.0.0</strong> is available — you're on <span id="update-current-label">0.0.0</span>
+      </span>
+      <div class="update-actions">
+        <button id="btn-update-notes" class="update-btn-secondary">What's New</button>
+        <button id="btn-update-download" class="update-btn-primary">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Download
+        </button>
+        <button id="btn-update-dismiss" class="update-dismiss" title="Dismiss">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- What's New modal -->
+  <div id="update-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          <span id="modal-version-title">What's New</span>
+        </div>
+        <button id="btn-modal-close" class="update-dismiss">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div id="modal-notes" class="modal-notes"></div>
+      <div class="modal-footer">
+        <button id="btn-modal-download" class="update-btn-primary" style="width:100%">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Download Update
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="layout">
+
+    <!-- ─ Sidebar ─────────────────────────────────────────────────────────── -->
+    <aside id="sidebar">
+      <div class="logo">
+        <span class="logo-x">X</span><span class="logo-nvd">NVD</span>
+      </div>
+
+      <nav>
+        <button class="nav-btn active" data-page="play">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <span>Play</span>
+        </button>
+        <button class="nav-btn" data-page="mods">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19h.5v3c4.86-2.34 8-7 8-11.5C20 5.81 16.19 2 11.5 2zm1 14.5h-2v-2h2v2zm0-4h-2c0-3.25 3-3 3-5 0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-2.21 1.79-4 4-4s4 1.79 4 4c0 2.5-3 2.75-3 5z"/></svg>
+          <span>Mods</span>
+        </button>
+        <button class="nav-btn" data-page="cosmetics">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm0 2c3.87 0 6 1.47 6 2s-2.13 2-6 2-6-1.47-6-2 2.13-2 6-2zm0 14c-3.87 0-6-1.47-6-2v-1.73C7.47 16.13 9.61 17 12 17s4.53-.87 6-1.73V17c0 .53-2.13 2-6 2zm6-5c0 .53-2.13 2-6 2s-6-1.47-6-2v-1.73C7.47 13.13 9.61 14 12 14s4.53-.87 6-1.73V14zm0-4c0 .53-2.13 2-6 2s-6-1.47-6-2V8.27C7.47 9.13 9.61 10 12 10s4.53-.87 6-1.73V10z"/></svg>
+          <span>Cosmetics</span>
+        </button>
+        <button class="nav-btn" data-page="settings">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="account-block" id="account-block">
+          <div class="acct-avatar" id="acct-avatar">?</div>
+          <div class="acct-info">
+            <div class="acct-name" id="acct-name">Not signed in</div>
+            <button class="acct-btn" id="acct-btn">Sign in with Microsoft</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─ Main ───────────────────────────────────────────────────────────── -->
+    <main id="main">
+
+      <!-- Play Page -->
+      <div id="page-play" class="page active">
+        <div class="orb orb-a"></div>
+        <div class="orb orb-b"></div>
+        <div class="orb orb-c"></div>
+
+        <div class="play-content">
+          <div class="play-hero">
+            <div class="play-logo-glow"></div>
+            <h1 class="play-title">Ready to Play</h1>
+            <p class="play-sub">Minecraft Java Edition</p>
+          </div>
+
+          <div class="glass-card vc-card">
+            <div class="vc-row">
+              <label class="vc-lbl">Version</label>
+              <select id="version-select" class="xselect"></select>
+              <label class="snap-label"><input type="checkbox" id="show-snapshots"> <span>Snapshots</span></label>
+            </div>
+            <div class="vc-divider"></div>
+            <div class="vc-row">
+              <label class="fab-toggle">
+                <input type="checkbox" id="use-fabric">
+                <span class="fab-slider"></span>
+                <span class="fab-text">Fabric</span>
+              </label>
+              <select id="fabric-select" class="xselect" disabled></select>
+            </div>
+          </div>
+
+          <div class="play-actions">
+            <div class="play-btn-container">
+              <div class="play-btn-glow"></div>
+              <button id="btn-play" class="play-btn" disabled>
+                <span class="btn-shine"></span>
+                <span id="play-label">PLAY</span>
+              </button>
+            </div>
+            <div class="action-pills">
+              <button id="btn-install" class="pill">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Install
+              </button>
+              <button id="btn-get-mods" class="pill">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Get Mods
+              </button>
+            </div>
+          </div>
+
+          <!-- Featured Servers -->
+          <div class="servers-row">
+            <div class="server-chip" data-ip="hypixel.net">
+              <div class="srv-dot" style="background:#f59e0b"></div>
+              <span>Hypixel</span>
+            </div>
+            <div class="server-chip" data-ip="mc.cubecraft.net">
+              <div class="srv-dot" style="background:#06b6d4"></div>
+              <span>CubeCraft</span>
+            </div>
+            <div class="server-chip" data-ip="play.mineplex.com">
+              <div class="srv-dot" style="background:#a855f7"></div>
+              <span>Mineplex</span>
+            </div>
+            <div class="server-chip" data-ip="2b2t.org">
+              <div class="srv-dot" style="background:#ef4444"></div>
+              <span>2b2t</span>
+            </div>
+          </div>
+
+          <div id="prog-wrap" class="prog-wrap hidden">
+            <div class="prog-track">
+              <div id="prog-fill" class="prog-fill"></div>
+              <div class="prog-shimmer"></div>
+            </div>
+            <div id="prog-text" class="prog-text">Preparing...</div>
+          </div>
+        </div>
+
+        <div id="console-dock" class="console-dock hidden">
+          <div class="console-topbar">
+            <div class="console-dot red"></div>
+            <div class="console-dot yellow"></div>
+            <div class="console-dot green"></div>
+            <span class="console-title">Game Console</span>
+            <button id="btn-console-hide" class="console-hide-btn">Hide</button>
+          </div>
+          <div id="console-out" class="console-out"></div>
+        </div>
+      </div>
+
+      <!-- Mods Page -->
+      <div id="page-mods" class="page">
+        <div class="mods-layout">
+          <div class="mods-top">
+            <div>
+              <h2 class="page-title">Mod Manager</h2>
+              <p class="page-sub">Search Modrinth and manage your installed mods</p>
+            </div>
+            <button id="btn-open-folder" class="pill">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+              Open Mods Folder
+            </button>
+          </div>
+
+          <div class="search-bar-wrap">
+            <div class="search-bar">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input type="text" id="mod-search" class="search-input" placeholder="Search for mods on Modrinth...">
+              <div id="search-spin" class="search-spin hidden">
+                <div class="spin-ring"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mods-tabs">
+            <button class="mtab active" data-tab="browse">Browse</button>
+            <button class="mtab" data-tab="installed">
+              Installed
+              <span id="installed-badge" class="badge">0</span>
+            </button>
+          </div>
+
+          <div id="tab-browse" class="mtab-content">
+            <div id="browse-grid" class="mods-grid">
+              <div class="mods-empty">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <p>Search for mods above, or browse popular ones loading below...</p>
+              </div>
+            </div>
+          </div>
+          <div id="tab-installed" class="mtab-content hidden">
+            <div id="installed-list" class="installed-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cosmetics Page -->
+      <div id="page-cosmetics" class="page">
+        <div class="cos-layout">
+
+          <div class="cos-header">
+            <div>
+              <h2 class="page-title">Cosmetics</h2>
+              <p class="page-sub">Customize your in-game appearance</p>
+            </div>
+            <div id="cos-equipped-badge" class="cos-equipped-badge hidden">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              <span id="cos-equipped-name">No Cape</span>
+            </div>
+          </div>
+
+          <!-- Category tabs -->
+          <div class="cos-cat-tabs">
+            <button class="cos-cat active" data-cat="capes">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6.5 10h-2v7h2v-7zm6 0h-2v7h2v-7zm8.5 9H2v2h19v-2zm-2.5-9h-2v7h2v-7zM11.5 1L2 6v2h19V6l-9.5-5z"/></svg>
+              Capes
+            </button>
+            <button class="cos-cat locked" data-cat="wings" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M21 3L3 10.53v.98l6.84 2.65L12.48 21h.98L21 3z"/></svg>
+              Wings
+              <span class="soon-pill">Soon</span>
+            </button>
+            <button class="cos-cat locked" data-cat="hats" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+              Hats
+              <span class="soon-pill">Soon</span>
+            </button>
+          </div>
+
+          <div class="cos-body">
+            <!-- Cape grid -->
+            <div id="cape-grid" class="cape-grid"></div>
+
+            <!-- Preview panel -->
+            <div class="cos-preview-panel">
+              <div class="preview-title">Preview</div>
+
+              <!-- CSS player silhouette -->
+              <div class="player-preview">
+                <div class="player-figure">
+                  <div class="player-head"></div>
+                  <div class="player-body">
+                    <div id="cape-preview-swatch" class="player-cape"></div>
+                  </div>
+                  <div class="player-legs">
+                    <div class="player-leg"></div>
+                    <div class="player-leg"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="preview-name" class="preview-cape-name">Select a cape</div>
+              <div id="preview-desc" class="preview-cape-desc">—</div>
+
+              <button id="btn-equip-cape" class="cta-btn cos-equip-btn" disabled>
+                Equip Cape
+              </button>
+              <div id="equip-status" class="equip-status hidden"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div id="page-settings" class="page">
+        <div class="settings-wrap">
+          <h2 class="page-title">Settings</h2>
+
+          <div class="s-card glass-card">
+            <div class="s-section">
+              <div class="s-label">RAM Allocation</div>
+              <div class="ram-row">
+                <input type="range" id="ram-slider" min="512" max="16384" step="512" value="2048" class="xrange">
+                <div class="ram-bubble" id="ram-bubble">2048 MB</div>
+              </div>
+              <div class="ram-marks">
+                <span>512 MB</span><span>4 GB</span><span>8 GB</span><span>16 GB</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="s-card glass-card">
+            <div class="s-section">
+              <div class="s-label">Game Directory</div>
+              <div class="path-row">
+                <input type="text" id="gamedir-input" class="xpath" placeholder="Default — %APPDATA%\.minecraft">
+                <button class="pill" id="btn-browse-dir">Browse</button>
+              </div>
+            </div>
+            <div class="s-divider"></div>
+            <div class="s-section">
+              <div class="s-label">Java Executable</div>
+              <div class="path-row">
+                <input type="text" id="java-input" class="xpath" placeholder="Auto-detect">
+                <button class="pill" id="btn-browse-java">Browse</button>
+              </div>
+              <div class="s-hint">Java 17+ required for 1.17+ · Java 21 recommended for best performance</div>
+            </div>
+          </div>
+
+          <div class="save-row">
+            <button class="cta-btn" id="btn-save">Save Settings</button>
+            <span id="save-ok" class="save-ok hidden">✓ Saved!</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+{
+  "name": "xnvd-launcher",
+  "version": "1.0.0",
+  "description": "XNVD Minecraft Launcher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build:portable": "electron-builder --win portable --x64"
+  },
+  "build": {
+    "appId": "com.xnvd.launcher",
+    "productName": "XNVD Launcher",
+    "copyright": "Copyright © 2025 XNVD",
+    "icon": "assets/icon.ico",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "!node_modules/.cache/**/*",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}/**",
+      "!**/*.map"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "XNVD Launcher",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "XNVD-Launcher-Portable-${version}.exe"
+    }
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10"
+  },
+  "devDependencies": {
+    "@electron/windows-sign": "^1.2.2",
+    "electron": "^28.3.0",
+    "electron-builder": "^24.13.0",
+    "to-ico": "^1.1.5"
+  }
+}
