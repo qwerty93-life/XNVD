@@ -10,15 +10,41 @@ const updater = require('./src/updater');
 const store = require('./src/store');
 
 let mainWindow;
+let splashWindow;
 
+// ── Splash screen ─────────────────────────────────────────────────────────────
+function createSplashWindow() {
+  splashWindow = new BrowserWindow({
+    width: 460,
+    height: 280,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    alwaysOnTop: true,
+    center: true,
+    skipTaskbar: true,
+    webPreferences: { contextIsolation: true }
+  });
+  splashWindow.loadFile('renderer/splash.html');
+}
+
+function closeSplash() {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.close();
+    splashWindow = null;
+  }
+}
+
+// ── Main window ───────────────────────────────────────────────────────────────
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1080,
-    height: 680,
-    minWidth: 880,
+    width: 1100,
+    height: 700,
+    minWidth: 900,
     minHeight: 580,
     frame: false,
-    backgroundColor: '#050510',
+    show: false,               // hidden until ready-to-show fires
+    backgroundColor: '#020608',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -26,17 +52,28 @@ function createWindow() {
     }
   });
   mainWindow.loadFile('renderer/index.html');
+
+  // Swap splash → main once the renderer has fully painted
+  mainWindow.once('ready-to-show', () => {
+    // Small delay so bar-fill animation has time to finish on splash
+    setTimeout(() => {
+      closeSplash();
+      mainWindow.show();
+      mainWindow.focus();
+    }, 350);
+  });
 }
 
 app.whenReady().then(async () => {
+  createSplashWindow();
   createWindow();
-  // Check for updates ~3 seconds after launch (non-blocking)
+  // Check for updates ~4 s after launch (non-blocking)
   setTimeout(async () => {
     const update = await updater.checkForUpdates();
     if (update.available) {
       mainWindow?.webContents.send('update:available', update);
     }
-  }, 3000);
+  }, 4000);
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 
@@ -105,9 +142,14 @@ ipcMain.handle('mods:search', async (_, { query, gameVersion }) => {
   }
 });
 
-ipcMain.handle('mods:install', async (_, { slug, gameVersion, gameDir }) => {
+ipcMain.handle('mods:versions', async (_, { slug, gameVersion }) => {
+  try { return await mods.getModVersions(slug, gameVersion); }
+  catch { return []; }
+});
+
+ipcMain.handle('mods:install', async (_, { slug, gameVersion, gameDir, versionId }) => {
   try {
-    const filename = await mods.installMod(slug, gameVersion, gameDir || minecraft.getGameDir());
+    const filename = await mods.installMod(slug, gameVersion, gameDir || minecraft.getGameDir(), versionId || null);
     return { success: true, filename };
   } catch (err) {
     return { success: false, error: err.message };

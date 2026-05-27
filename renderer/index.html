@@ -16,7 +16,7 @@
 </head>
 <body>
 
-  <!-- ░░ Background layers ░░ -->
+  <!-- ░░ Background ░░ -->
   <div class="bg-base"></div>
   <div class="bg-stars" aria-hidden="true">
     <div class="star s1"></div><div class="star s2"></div><div class="star s3"></div>
@@ -24,27 +24,16 @@
     <div class="star s7"></div><div class="star s8"></div><div class="star s9"></div>
     <div class="star s10"></div><div class="star s11"></div><div class="star s12"></div>
   </div>
-  <div class="bg-terrain" aria-hidden="true"></div>
   <div class="bg-vignette" aria-hidden="true"></div>
 
   <!-- ░░ Custom titlebar ░░ -->
   <div id="titlebar">
-    <div class="tb-drag tb-drag-l"></div>
-    <div class="tb-brand">
-      <svg class="tb-icon" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="14" width="16" height="4" fill="currentColor" rx="1"/>
-        <rect x="6" y="10" width="8" height="4" fill="currentColor" rx="1"/>
-        <rect x="4" y="2" width="5" height="8" fill="currentColor" rx="1"/>
-        <rect x="11" y="4" width="5" height="6" fill="currentColor" rx="1"/>
-      </svg>
-      XNVD
-    </div>
-    <div class="tb-drag tb-drag-r"></div>
+    <div class="tb-drag"></div>
     <div class="tb-controls">
-      <button id="btn-min" class="tb-btn" title="Minimise">
+      <button id="btn-min" class="tb-btn" title="Minimize">
         <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1.5" fill="currentColor" rx="1"/></svg>
       </button>
-      <button id="btn-max" class="tb-btn" title="Maximise">
+      <button id="btn-max" class="tb-btn" title="Maximize">
         <svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.2" rx="1.5"/></svg>
       </button>
       <button id="btn-close" class="tb-btn tb-close" title="Close">
@@ -56,445 +45,492 @@
     </div>
   </div>
 
-  <!-- ░░ Update notification bar ░░ -->
-  <div id="update-bar" class="update-bar hidden" role="alert">
-    <div class="update-bar-inner">
-      <span class="update-dot"></span>
-      <span class="update-text">
-        <strong id="update-version-label">v1.1.0</strong> is available — you're on <span id="update-current-label">v1.0.0</span>
-      </span>
-      <div class="update-actions">
-        <button id="btn-update-notes" class="upd-btn-ghost">What's New</button>
-        <button id="btn-update-download" class="upd-btn-solid">
-          <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12"><path d="M8 12L3 7h3V2h4v5h3L8 12zM2 14h12v1.5H2V14z"/></svg>
-          Download
+  <!-- ░░ App shell: sidebar + content ░░ -->
+  <div id="app-shell">
+
+    <!-- ▌ Sidebar ▌ -->
+    <aside id="sidebar">
+
+      <div class="sidebar-logo">
+        <svg class="sidebar-logo-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M3 18L12 4l9 14H3z" fill="var(--accent)" opacity=".15"/>
+          <path d="M3 18L12 4l9 14" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="10" y="10" width="4" height="8" fill="var(--accent)" rx=".5"/>
+        </svg>
+        <span class="sidebar-logo-text"><span class="accent-text">X</span>NVD</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-page="play">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M6.5 5.5v9l8-4.5-8-4.5z"/></svg>
+          <span class="nav-label">Play</span>
         </button>
-        <button id="btn-update-dismiss" class="upd-dismiss" title="Dismiss">×</button>
+        <button class="nav-btn" data-page="mods">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M11 3a1 1 0 10-2 0v1H7a2 2 0 00-2 2v1H4a1 1 0 100 2h1v5a2 2 0 002 2h6a2 2 0 002-2V9h1a1 1 0 100-2h-1V6a2 2 0 00-2-2h-2V3z"/></svg>
+          <span class="nav-label">Mods</span>
+          <span id="installed-badge" class="nav-badge"></span>
+        </button>
+        <button class="nav-btn" data-page="cosmetics">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 2C6.13 2 3 3.79 3 6v8c0 2.21 3.13 4 7 4s7-1.79 7-4V6c0-2.21-3.13-4-7-4zm0 2c2.76 0 5 .9 5 2s-2.24 2-5 2-5-.9-5-2 2.24-2 5-2zm0 11c-2.76 0-5-.9-5-2v-1.8C6.4 12.3 8.1 13 10 13s3.6-.7 5-1.8V13c0 1.1-2.24 2-5 2z"/></svg>
+          <span class="nav-label">Cosmetics</span>
+        </button>
+        <button class="nav-btn" data-page="settings">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M15.95 10.78c.03-.25.05-.51.05-.78s-.02-.53-.06-.78l1.69-1.32a.4.4 0 00.1-.51l-1.6-2.77a.4.4 0 00-.49-.18l-2 .8a5.8 5.8 0 00-1.34-.78l-.3-2.13A.39.39 0 0011.6 2H8.4a.39.39 0 00-.39.33l-.3 2.13a5.8 5.8 0 00-1.34.78l-2-.8a.39.39 0 00-.49.18L2.28 7.17a.4.4 0 00.1.51l1.69 1.32A6.3 6.3 0 004 10c0 .27.02.52.06.78L2.37 12.1a.4.4 0 00-.1.51l1.6 2.77c.1.18.31.24.49.18l2-.8c.42.3.86.55 1.34.78l.3 2.13c.06.2.24.33.4.33h3.2c.18 0 .34-.13.39-.33l.3-2.13a5.8 5.8 0 001.34-.78l2 .8c.18.06.39 0 .49-.18l1.6-2.77a.4.4 0 00-.1-.51l-1.67-1.32zM10 13a3 3 0 110-6 3 3 0 010 6z"/></svg>
+          <span class="nav-label">Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <!-- Account block -->
+      <div id="account-block" class="sidebar-account">
+        <div class="acct-avatar-wrap">
+          <div class="nav-avatar" id="acct-avatar">?</div>
+        </div>
+        <div class="acct-text">
+          <div class="nav-acct-name" id="acct-name">Not signed in</div>
+          <button class="nav-acct-btn" id="acct-btn">Sign in with Microsoft</button>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- ░░ Top navigation bar ░░ -->
-  <nav id="topnav">
-    <div class="nav-logo">
-      <svg class="nav-logo-icon" viewBox="0 0 24 24" fill="none">
-        <path d="M3 18L12 4l9 14H3z" fill="var(--accent)" opacity=".15"/>
-        <path d="M3 18L12 4l9 14" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
-        <rect x="10" y="10" width="4" height="8" fill="var(--accent)" rx=".5"/>
-      </svg>
-      <span class="nav-logo-text"><span class="accent-text">X</span>NVD</span>
-    </div>
+    </aside><!-- /sidebar -->
 
-    <div class="nav-links">
-      <button class="nav-btn active" data-page="play">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M6.5 5.5v9l8-4.5-8-4.5z"/></svg>
-        Play
-      </button>
-      <button class="nav-btn" data-page="mods">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm0 10c-2.21 0-4.17-1.13-5.32-2.85C5.81 10.67 7.75 9.5 10 9.5s4.19 1.17 5.32 2.65C14.17 13.87 12.21 15 10 15z"/></svg>
-        Mods
-      </button>
-      <button class="nav-btn" data-page="cosmetics">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M10 2C5.58 2 2 3.79 2 6v8c0 2.21 3.58 4 8 4s8-1.79 8-4V6c0-2.21-3.58-4-8-4zm0 2c3.31 0 6 1.12 6 2.5S13.31 9 10 9 4 7.88 4 6.5 6.69 4 10 4zm0 11c-3.31 0-6-1.12-6-2.5V11c1.25 1 3.37 1.67 6 1.67S14.75 12 16 11v1.5c0 1.38-2.69 2.5-6 2.5z"/></svg>
-        Cosmetics
-      </button>
-      <button class="nav-btn" data-page="settings">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M15.95 10.78c.03-.25.05-.51.05-.78s-.02-.53-.06-.78l1.69-1.32a.4.4 0 00.1-.51l-1.6-2.77a.4.4 0 00-.49-.18l-2 .8a5.8 5.8 0 00-1.34-.78l-.3-2.13A.39.39 0 0011.6 2H8.4a.39.39 0 00-.39.33l-.3 2.13a5.8 5.8 0 00-1.34.78l-2-.8a.39.39 0 00-.49.18L2.28 7.17a.4.4 0 00.1.51l1.69 1.32A6.3 6.3 0 004 10c0 .27.02.52.06.78L2.37 12.1a.4.4 0 00-.1.51l1.6 2.77c.1.18.31.24.49.18l2-.8c.42.3.86.55 1.34.78l.3 2.13c.06.2.24.33.4.33h3.2c.18 0 .34-.13.39-.33l.3-2.13a5.8 5.8 0 001.34-.78l2 .8c.18.06.39 0 .49-.18l1.6-2.77a.4.4 0 00-.1-.51l-1.67-1.32zM10 13a3 3 0 110-6 3 3 0 010 6z"/></svg>
-        Settings
-      </button>
-    </div>
+    <!-- ▌ Main content ▌ -->
+    <div id="main-content">
 
-    <div class="nav-account" id="account-block">
-      <div class="nav-avatar" id="acct-avatar">?</div>
-      <div class="nav-acct-info">
-        <div class="nav-acct-name" id="acct-name">Not signed in</div>
-        <button class="nav-acct-btn" id="acct-btn">Sign in with Microsoft</button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- ░░ Pages container ░░ -->
-  <div id="pages-wrapper">
-
-    <!-- ▓▓ PLAY PAGE ▓▓ -->
-    <div id="page-play" class="page active">
-      <div class="play-layout">
-
-        <!-- Left: Main controls -->
-        <div class="play-left">
-
-          <div class="play-hero">
-            <div class="play-hero-badge">Minecraft Java Edition</div>
-            <h1 class="play-hero-title">
-              <span class="accent-text">X</span>NVD<br>
-              <span class="play-hero-sub">LAUNCHER</span>
-            </h1>
+      <!-- Update notification bar (hidden until update found) -->
+      <div id="update-bar" class="update-bar hidden" role="alert">
+        <div class="update-bar-inner">
+          <span class="update-dot"></span>
+          <span class="update-text">
+            <strong id="update-version-label">v1.1.0</strong> is available —
+            you're on <span id="update-current-label">v1.0.0</span>
+          </span>
+          <div class="update-actions">
+            <button id="btn-update-notes" class="upd-btn-ghost">What's New</button>
+            <button id="btn-update-download" class="upd-btn-solid">
+              <svg viewBox="0 0 16 16" fill="currentColor" width="11" height="11"><path d="M8 12L3 7h3V2h4v5h3L8 12zM2 14h12v1.5H2V14z"/></svg>
+              Download
+            </button>
+            <button id="btn-update-dismiss" class="upd-dismiss" title="Dismiss">×</button>
           </div>
+        </div>
+      </div>
 
-          <!-- Version card -->
-          <div class="glass-card vc-card">
-            <div class="vc-row">
-              <div class="vc-field">
-                <label class="field-label">Version</label>
-                <select id="version-select" class="xselect"></select>
+      <!-- Pages -->
+      <div id="pages-wrapper">
+
+        <!-- ▓▓ PLAY PAGE ▓▓ -->
+        <div id="page-play" class="page active">
+          <div class="play-scroll">
+
+            <!-- Hero banner -->
+            <div class="play-hero">
+              <div class="play-hero-bg"></div>
+              <div class="play-hero-content">
+
+                <div class="hero-left">
+                  <div class="hero-edition-badge">Java Edition</div>
+                  <h2 class="hero-title">Minecraft</h2>
+                  <div class="hero-version-row">
+                    <span class="hero-ver-dot"></span>
+                    <span class="hero-ver-text">Loading versions…</span>
+                  </div>
+                  <div class="hero-meta">
+                    <div class="hero-meta-item">
+                      <svg viewBox="0 0 16 16" fill="currentColor" width="11" height="11"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 2a6 6 0 110 12A6 6 0 018 2z"/></svg>
+                      Modrinth Mods
+                    </div>
+                    <div class="hero-meta-item">
+                      <svg viewBox="0 0 16 16" fill="currentColor" width="11" height="11"><path d="M2 2h12v2H2zM2 6h12v2H2zM2 10h8v2H2z"/></svg>
+                      Microsoft Auth
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hero-right">
+                  <div class="hero-play-wrap">
+                    <button id="btn-play" class="play-btn" disabled>
+                      <span class="play-btn-glow"></span>
+                      <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M8 5v14l11-7z"/></svg>
+                      <span id="play-label">PLAY</span>
+                    </button>
+                  </div>
+                  <div class="hero-sec-btns">
+                    <button id="btn-install" class="hero-sec-btn">
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M13 8V2H7v6H4l6 6 6-6h-3zM2 17h16v2H2v-2z"/></svg>
+                      Install
+                    </button>
+                    <button id="btn-get-mods" class="hero-sec-btn">
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M11 3a1 1 0 10-2 0v1H7a2 2 0 00-2 2v1H4a1 1 0 100 2h1v5a2 2 0 002 2h6a2 2 0 002-2V9h1a1 1 0 100-2h-1V6a2 2 0 00-2-2h-2V3z"/></svg>
+                      Get Mods
+                    </button>
+                  </div>
+                </div>
+
               </div>
-              <label class="snap-label">
-                <input type="checkbox" id="show-snapshots">
-                <span class="snap-text">Snapshots</span>
-              </label>
             </div>
-            <div class="vc-sep"></div>
-            <div class="vc-row">
-              <label class="fabric-toggle">
-                <input type="checkbox" id="use-fabric">
-                <span class="fab-track">
-                  <span class="fab-thumb"></span>
-                </span>
-                <span class="fab-label">Fabric Loader</span>
-              </label>
-              <select id="fabric-select" class="xselect xselect-sm" disabled></select>
-            </div>
-          </div>
+            <!-- /hero -->
 
-          <!-- Play button -->
-          <div class="play-cta">
-            <div class="play-btn-wrap">
-              <button id="btn-play" class="play-btn" disabled>
-                <span class="play-btn-glow"></span>
-                <span class="play-btn-shine"></span>
-                <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M8 5v14l11-7z"/></svg>
-                <span id="play-label">PLAY</span>
+            <!-- Body grid -->
+            <div class="play-body">
+
+              <!-- Left column -->
+              <div class="play-body-left">
+
+                <!-- Version card -->
+                <div class="glass-card vc-card">
+                  <div class="vc-card-head">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9zM4 5a2 2 0 012-2 3 3 0 006 0 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/></svg>
+                    Version Configuration
+                  </div>
+                  <div class="vc-row">
+                    <div class="vc-field">
+                      <label class="field-label">Minecraft Version</label>
+                      <select id="version-select" class="xselect"></select>
+                    </div>
+                    <label class="snap-label">
+                      <input type="checkbox" id="show-snapshots">
+                      <span class="snap-text">Snapshots</span>
+                    </label>
+                  </div>
+                  <div class="vc-sep"></div>
+                  <div class="vc-row">
+                    <label class="fabric-toggle">
+                      <input type="checkbox" id="use-fabric">
+                      <span class="fab-track"><span class="fab-thumb"></span></span>
+                      <span class="fab-label">Fabric Loader</span>
+                    </label>
+                    <select id="fabric-select" class="xselect xselect-sm" disabled></select>
+                  </div>
+                </div>
+
+                <!-- Server quick-join -->
+                <div class="glass-card servers-card">
+                  <div class="servers-card-head">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm0 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2z"/></svg>
+                    Quick Join
+                  </div>
+                  <div class="servers-row">
+                    <div class="server-chip" data-ip="hypixel.net">
+                      <div class="srv-dot" style="background:#f59e0b"></div><span>Hypixel</span>
+                    </div>
+                    <div class="server-chip" data-ip="mc.cubecraft.net">
+                      <div class="srv-dot" style="background:#06b6d4"></div><span>CubeCraft</span>
+                    </div>
+                    <div class="server-chip" data-ip="play.mineplex.com">
+                      <div class="srv-dot" style="background:#a855f7"></div><span>Mineplex</span>
+                    </div>
+                    <div class="server-chip" data-ip="2b2t.org">
+                      <div class="srv-dot" style="background:#ef4444"></div><span>2b2t</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Progress bar -->
+                <div id="prog-wrap" class="prog-wrap hidden">
+                  <div class="prog-track">
+                    <div id="prog-fill" class="prog-fill"></div>
+                    <div class="prog-shimmer"></div>
+                  </div>
+                  <div id="prog-text" class="prog-text">Preparing…</div>
+                </div>
+
+                <!-- Console dock -->
+                <div id="console-dock" class="console-dock hidden">
+                  <div class="console-topbar">
+                    <div class="console-dots">
+                      <div class="console-dot red"></div>
+                      <div class="console-dot yellow"></div>
+                      <div class="console-dot green"></div>
+                    </div>
+                    <span class="console-title">Game Console</span>
+                    <button id="btn-console-hide" class="console-hide">Hide ↑</button>
+                  </div>
+                  <div id="console-out" class="console-out"></div>
+                </div>
+
+              </div><!-- /play-body-left -->
+
+              <!-- Right column -->
+              <div class="play-body-right">
+
+                <!-- Instance list -->
+                <div class="glass-card instance-card">
+                  <div class="instance-header">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M3 3h14v2H3V3zm0 4h14v2H3V7zm0 4h8v2H3v-2z"/></svg>
+                    Instances
+                  </div>
+                  <div class="instance-list">
+                    <div class="instance-item inst-active">
+                      <div class="inst-indicator"></div>
+                      <div class="inst-info">
+                        <div class="inst-name">Latest — Fabric</div>
+                        <div class="inst-ver">1.21.4</div>
+                      </div>
+                      <div class="inst-running">ACTIVE</div>
+                    </div>
+                    <div class="instance-item">
+                      <div class="inst-indicator inst-ind-off"></div>
+                      <div class="inst-info">
+                        <div class="inst-name">1.20.4 — Vanilla</div>
+                        <div class="inst-ver">Release</div>
+                      </div>
+                    </div>
+                    <div class="instance-item">
+                      <div class="inst-indicator inst-ind-off"></div>
+                      <div class="inst-info">
+                        <div class="inst-name">1.19.2 — Modded</div>
+                        <div class="inst-ver">Fabric 0.14.x</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- News stack -->
+                <div class="news-stack">
+
+                  <div class="glass-card news-card news-card-featured">
+                    <div class="news-thumb">
+                      <div class="news-thumb-art" style="--news-hue:145"></div>
+                      <div class="news-badge news-badge-update">UPDATE</div>
+                    </div>
+                    <div class="news-body">
+                      <div class="news-date">May 2025</div>
+                      <div class="news-title">Minecraft 1.21.5 — "The Garden Awakens"</div>
+                      <div class="news-desc">Pale garden expansion, eyeblossom flowers, and creaking heart mechanics in the latest Java update.</div>
+                      <div class="news-tag-row">
+                        <span class="ntag ntag-green">Update</span>
+                        <span class="ntag">Java</span>
+                        <span class="ntag">1.21.5</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="glass-card news-card news-card-sm">
+                    <div class="news-thumb news-thumb-sm">
+                      <div class="news-thumb-art" style="--news-hue:220"></div>
+                      <div class="news-badge news-badge-launcher">LAUNCHER</div>
+                    </div>
+                    <div class="news-body">
+                      <div class="news-date">May 2025</div>
+                      <div class="news-title">XNVD v1.1 — Sidebar UI + Splash Screen</div>
+                      <div class="news-desc">Brand new XMCL-inspired UI, mod version selector, cape cosmetics, and auto-update notifications.</div>
+                      <div class="news-tag-row">
+                        <span class="ntag ntag-purple">Release</span>
+                        <span class="ntag">XNVD</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="glass-card news-card news-card-sm">
+                    <div class="news-thumb news-thumb-sm">
+                      <div class="news-thumb-art" style="--news-hue:30"></div>
+                      <div class="news-badge news-badge-event">EVENT</div>
+                    </div>
+                    <div class="news-body">
+                      <div class="news-date">Apr 2025</div>
+                      <div class="news-title">Minecraft Live 2025 — Vote Now</div>
+                      <div class="news-desc">Three mob candidates, one winner — the community decides the next Minecraft creature.</div>
+                      <div class="news-tag-row">
+                        <span class="ntag ntag-orange">Event</span>
+                        <span class="ntag">Community</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div><!-- /news-stack -->
+
+              </div><!-- /play-body-right -->
+            </div><!-- /play-body -->
+
+          </div><!-- /play-scroll -->
+        </div><!-- /page-play -->
+
+        <!-- ▓▓ MODS PAGE ▓▓ -->
+        <div id="page-mods" class="page">
+          <div class="inner-page-wrap">
+            <div class="inner-page-top">
+              <div>
+                <h2 class="page-title">Mod Manager</h2>
+                <p class="page-sub">Search Modrinth and manage your installed mods</p>
+              </div>
+              <button id="btn-open-folder" class="ghost-btn">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M2 5a2 2 0 012-2h3.586L9 4.414A2 2 0 0010.414 5H16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"/></svg>
+                Open Folder
               </button>
             </div>
-            <div class="secondary-btns">
-              <button id="btn-install" class="sec-btn">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M13 8V2H7v6H4l6 6 6-6h-3zM2 17h16v2H2v-2z"/></svg>
-                Install
+            <div class="search-wrap">
+              <div class="search-bar">
+                <svg class="search-ico" viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/></svg>
+                <input type="text" id="mod-search" class="search-input" placeholder="Search mods on Modrinth…">
+                <div id="search-spin" class="search-spin hidden"><div class="spin-ring"></div></div>
+              </div>
+            </div>
+            <div class="mods-tabs" role="tablist">
+              <button class="mtab active" data-tab="browse" role="tab">Browse</button>
+              <button class="mtab" data-tab="installed" role="tab">
+                Installed
               </button>
-              <button id="btn-get-mods" class="sec-btn">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M10 2a1 1 0 01.75.34l6 7a1 1 0 010 1.32l-6 7A1 1 0 019 17V2a1 1 0 011-1z"/></svg>
-                Get Mods
+            </div>
+            <div id="tab-browse" class="mtab-content">
+              <div id="browse-grid" class="mods-grid">
+                <div class="mods-empty">
+                  <svg viewBox="0 0 40 40" fill="none" width="40" height="40"><circle cx="18" cy="18" r="12" stroke="currentColor" stroke-width="2"/><line x1="27" y1="27" x2="37" y2="37" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <p>Search for mods above or browse popular ones…</p>
+                </div>
+              </div>
+            </div>
+            <div id="tab-installed" class="mtab-content hidden">
+              <div id="installed-list" class="installed-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ▓▓ COSMETICS PAGE ▓▓ -->
+        <div id="page-cosmetics" class="page">
+          <div class="inner-page-wrap">
+            <div class="inner-page-top">
+              <div>
+                <h2 class="page-title">Cosmetics</h2>
+                <p class="page-sub">Customize your in-game appearance</p>
+              </div>
+              <div id="cos-equipped-badge" class="cos-eq-badge hidden">
+                <svg viewBox="0 0 16 16" fill="currentColor" width="11" height="11"><path d="M6.5 11.5L3 8l1-1 2.5 2.5 5-5 1 1z"/></svg>
+                <span id="cos-equipped-name">No Cape</span>
+              </div>
+            </div>
+            <div class="cos-cat-tabs">
+              <button class="cos-cat active" data-cat="capes">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M5 8H3v7h2V8zm6 0H9v7h2V8zm8 9H1v2h18v-2zM7.5 1L1 5.5v1.5h18V5.5L12.5 1 10 3 7.5 1z"/></svg>
+                Capes
               </button>
-              <button class="sec-btn" onclick="document.querySelector('[data-page=settings]').click()">
-                <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M15.95 10.78c.03-.25.05-.51.05-.78s-.02-.53-.06-.78l1.69-1.32a.4.4 0 00.1-.51l-1.6-2.77a.4.4 0 00-.49-.18l-2 .8a5.8 5.8 0 00-1.34-.78l-.3-2.13A.39.39 0 0011.6 2H8.4a.39.39 0 00-.39.33l-.3 2.13a5.8 5.8 0 00-1.34.78l-2-.8a.39.39 0 00-.49.18L2.28 7.17a.4.4 0 00.1.51l1.69 1.32A6.3 6.3 0 004 10c0 .27.02.52.06.78L2.37 12.1a.4.4 0 00-.1.51l1.6 2.77c.1.18.31.24.49.18l2-.8c.42.3.86.55 1.34.78l.3 2.13c.06.2.24.33.4.33h3.2c.18 0 .34-.13.39-.33l.3-2.13a5.8 5.8 0 001.34-.78l2 .8c.18.06.39 0 .49-.18l1.6-2.77a.4.4 0 00-.1-.51l-1.67-1.32zM10 13a3 3 0 110-6 3 3 0 010 6z"/></svg>
-                Options
+              <button class="cos-cat cos-locked" data-cat="wings" disabled>
+                Wings <span class="soon-tag">Soon</span>
+              </button>
+              <button class="cos-cat cos-locked" data-cat="hats" disabled>
+                Hats <span class="soon-tag">Soon</span>
               </button>
             </div>
-          </div>
-
-          <!-- Server quick-join -->
-          <div class="servers-row">
-            <span class="servers-label">Quick Join</span>
-            <div class="server-chip" data-ip="hypixel.net">
-              <div class="srv-dot" style="background:#f59e0b"></div><span>Hypixel</span>
-            </div>
-            <div class="server-chip" data-ip="mc.cubecraft.net">
-              <div class="srv-dot" style="background:#06b6d4"></div><span>CubeCraft</span>
-            </div>
-            <div class="server-chip" data-ip="play.mineplex.com">
-              <div class="srv-dot" style="background:#a855f7"></div><span>Mineplex</span>
-            </div>
-            <div class="server-chip" data-ip="2b2t.org">
-              <div class="srv-dot" style="background:#ef4444"></div><span>2b2t</span>
-            </div>
-          </div>
-
-          <!-- Progress bar -->
-          <div id="prog-wrap" class="prog-wrap hidden">
-            <div class="prog-track">
-              <div id="prog-fill" class="prog-fill"></div>
-              <div class="prog-shimmer"></div>
-            </div>
-            <div id="prog-text" class="prog-text">Preparing…</div>
-          </div>
-
-          <!-- Console dock -->
-          <div id="console-dock" class="console-dock hidden">
-            <div class="console-topbar">
-              <div class="console-dots">
-                <div class="console-dot red"></div>
-                <div class="console-dot yellow"></div>
-                <div class="console-dot green"></div>
+            <div class="cos-body">
+              <div id="cape-grid" class="cape-grid"></div>
+              <div class="cos-panel">
+                <div class="cos-panel-title">Preview</div>
+                <div class="player-preview">
+                  <div class="player-figure">
+                    <div class="player-head"></div>
+                    <div class="player-body">
+                      <div class="player-arm left"></div>
+                      <div class="player-arm right"></div>
+                      <div id="cape-preview-swatch" class="player-cape"></div>
+                    </div>
+                    <div class="player-legs">
+                      <div class="player-leg"></div>
+                      <div class="player-leg"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="preview-name" class="preview-name">Select a cape</div>
+                <div id="preview-desc" class="preview-desc">—</div>
+                <button id="btn-equip-cape" class="equip-btn" disabled>Equip Cape</button>
+                <div id="equip-status" class="equip-status hidden"></div>
               </div>
-              <span class="console-title">Game Console</span>
-              <button id="btn-console-hide" class="console-hide">Hide ↑</button>
             </div>
-            <div id="console-out" class="console-out"></div>
           </div>
         </div>
 
-        <!-- Right: Instances + News -->
-        <div class="play-right">
-
-          <!-- Instance list -->
-          <div class="glass-card instance-card">
-            <div class="instance-header">
-              <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M3 3h14v2H3V3zm0 4h14v2H3V7zm0 4h8v2H3v-2z"/></svg>
-              Instances
-            </div>
-            <div class="instance-list">
-              <div class="instance-item inst-active">
-                <div class="inst-indicator"></div>
-                <div class="inst-info">
-                  <div class="inst-name">Latest — Fabric</div>
-                  <div class="inst-ver">1.21.4</div>
-                </div>
-                <div class="inst-running">LOADED</div>
-              </div>
-              <div class="instance-item">
-                <div class="inst-indicator inst-ind-off"></div>
-                <div class="inst-info">
-                  <div class="inst-name">1.20.4 — Vanilla</div>
-                  <div class="inst-ver">Release</div>
-                </div>
-              </div>
-              <div class="instance-item">
-                <div class="inst-indicator inst-ind-off"></div>
-                <div class="inst-info">
-                  <div class="inst-name">1.19.2 — Modded</div>
-                  <div class="inst-ver">Fabric 0.14.x</div>
-                </div>
+        <!-- ▓▓ SETTINGS PAGE ▓▓ -->
+        <div id="page-settings" class="page">
+          <div class="inner-page-wrap">
+            <div class="inner-page-top">
+              <div>
+                <h2 class="page-title">Settings</h2>
+                <p class="page-sub">Configure your launcher and Minecraft environment</p>
               </div>
             </div>
-          </div>
-
-          <!-- News stack -->
-          <div class="news-stack">
-
-            <div class="glass-card news-card news-card-featured">
-              <div class="news-thumb">
-                <div class="news-thumb-art" style="--news-hue:145"></div>
-                <div class="news-badge news-badge-update">UPDATE</div>
+            <div class="settings-grid">
+              <div class="glass-card s-card">
+                <div class="s-card-head">
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12zM9 7v4l3 1.5-.7 1.3-3.8-1.9V7H9z"/></svg>
+                  Performance
+                </div>
+                <div class="s-field">
+                  <label class="s-label">RAM Allocation</label>
+                  <div class="ram-row">
+                    <input type="range" id="ram-slider" min="512" max="16384" step="512" value="2048" class="xrange">
+                    <div class="ram-bubble" id="ram-bubble">2048 MB</div>
+                  </div>
+                  <div class="ram-marks">
+                    <span>512 MB</span><span>4 GB</span><span>8 GB</span><span>16 GB</span>
+                  </div>
+                </div>
               </div>
-              <div class="news-body">
-                <div class="news-date">May 2025</div>
-                <div class="news-title">Minecraft 1.21.5 — "The Garden Awakens"</div>
-                <div class="news-desc">New biomes, pale garden expansion, eyeblossom flowers, and creaking heart mechanics drop in this major update.</div>
-                <div class="news-tag-row">
-                  <span class="ntag ntag-green">Update</span>
-                  <span class="ntag">Java</span>
-                  <span class="ntag">1.21.5</span>
+              <div class="glass-card s-card">
+                <div class="s-card-head">
+                  <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M2 5a2 2 0 012-2h3.586L9 4.414A2 2 0 0010.414 5H16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"/></svg>
+                  Paths
+                </div>
+                <div class="s-field">
+                  <label class="s-label">Game Directory</label>
+                  <div class="path-row">
+                    <input type="text" id="gamedir-input" class="xpath" placeholder="%APPDATA%\.minecraft">
+                    <button class="ghost-btn" id="btn-browse-dir">Browse</button>
+                  </div>
+                </div>
+                <div class="s-sep"></div>
+                <div class="s-field">
+                  <label class="s-label">Java Executable</label>
+                  <div class="path-row">
+                    <input type="text" id="java-input" class="xpath" placeholder="Auto-detect">
+                    <button class="ghost-btn" id="btn-browse-java">Browse</button>
+                  </div>
+                  <div class="s-hint">Java 17+ for 1.17+ · Java 21 recommended for 1.20.5+</div>
                 </div>
               </div>
             </div>
+            <div class="save-row">
+              <button class="accent-btn" id="btn-save">Save Settings</button>
+              <span id="save-ok" class="save-ok hidden">✓ Settings saved</span>
+            </div>
 
-            <div class="glass-card news-card news-card-sm">
-              <div class="news-thumb news-thumb-sm">
-                <div class="news-thumb-art" style="--news-hue:220"></div>
-                <div class="news-badge news-badge-launcher">LAUNCHER</div>
+            <!-- Update info card in settings -->
+            <div class="glass-card s-card" style="margin-top:0">
+              <div class="s-card-head">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/></svg>
+                About / Updates
               </div>
-              <div class="news-body">
-                <div class="news-date">May 2025</div>
-                <div class="news-title">XNVD v1.1 — Mod Versioning + Cosmetics</div>
-                <div class="news-desc">Choose specific mod versions, equip capes in-game, and enjoy a brand-new cinematic UI.</div>
-                <div class="news-tag-row">
-                  <span class="ntag ntag-purple">Release</span>
-                  <span class="ntag">XNVD</span>
+              <div class="s-field">
+                <div class="s-hint" style="color:var(--text2);margin-bottom:10px">
+                  XNVD Launcher — Automatic updates via GitHub Releases.
+                  Set your GitHub owner/repo in <code style="color:var(--accent);font-size:10px">src/updater.js</code>
+                  to enable the update banner on launch.
                 </div>
-              </div>
-            </div>
-
-            <div class="glass-card news-card news-card-sm">
-              <div class="news-thumb news-thumb-sm">
-                <div class="news-thumb-art" style="--news-hue:30"></div>
-                <div class="news-badge news-badge-event">EVENT</div>
-              </div>
-              <div class="news-body">
-                <div class="news-date">Apr 2025</div>
-                <div class="news-title">Minecraft Live 2025 — Vote Now</div>
-                <div class="news-desc">Cast your vote for the next mob addition. Three candidates, one winner — the community decides.</div>
-                <div class="news-tag-row">
-                  <span class="ntag ntag-orange">Event</span>
-                  <span class="ntag">Community</span>
-                </div>
+                <button class="ghost-btn" onclick="window._checkForUpdates && window._checkForUpdates().then(i=>alert(i.available?'Update v'+i.version+' available!':'You are up to date.'))">
+                  Check for Updates
+                </button>
               </div>
             </div>
 
           </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- ▓▓ MODS PAGE ▓▓ -->
-    <div id="page-mods" class="page">
-      <div class="inner-page-wrap">
-        <div class="inner-page-top">
-          <div>
-            <h2 class="page-title">Mod Manager</h2>
-            <p class="page-sub">Search Modrinth and manage your installed mods</p>
-          </div>
-          <button id="btn-open-folder" class="ghost-btn">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M2 5a2 2 0 012-2h3.586L9 4.414A2 2 0 0010.414 5H16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"/></svg>
-            Open Folder
-          </button>
         </div>
 
-        <div class="search-wrap">
-          <div class="search-bar">
-            <svg class="search-ico" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/></svg>
-            <input type="text" id="mod-search" class="search-input" placeholder="Search mods on Modrinth…">
-            <div id="search-spin" class="search-spin hidden"><div class="spin-ring"></div></div>
-          </div>
+      </div><!-- /pages-wrapper -->
+
+      <!-- Status bar -->
+      <footer id="statusbar">
+        <div class="status-left">
+          <span class="status-dot pulse"></span>
+          <span class="status-text">Ready to launch</span>
         </div>
-
-        <div class="mods-tabs" role="tablist">
-          <button class="mtab active" data-tab="browse" role="tab">Browse</button>
-          <button class="mtab" data-tab="installed" role="tab">
-            Installed
-            <span id="installed-badge" class="badge">0</span>
-          </button>
+        <div class="status-right">
+          <span class="status-ver">v1.0.0</span>
+          <span class="status-sep">·</span>
+          <span class="status-brand">XNVD 2025</span>
         </div>
+      </footer>
 
-        <div id="tab-browse" class="mtab-content">
-          <div id="browse-grid" class="mods-grid">
-            <div class="mods-empty">
-              <svg viewBox="0 0 40 40" fill="none" width="40" height="40"><circle cx="18" cy="18" r="12" stroke="currentColor" stroke-width="2"/><line x1="27" y1="27" x2="37" y2="37" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <p>Search for mods above or browse popular ones…</p>
-            </div>
-          </div>
-        </div>
-        <div id="tab-installed" class="mtab-content hidden">
-          <div id="installed-list" class="installed-list"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ▓▓ COSMETICS PAGE ▓▓ -->
-    <div id="page-cosmetics" class="page">
-      <div class="inner-page-wrap">
-        <div class="inner-page-top">
-          <div>
-            <h2 class="page-title">Cosmetics</h2>
-            <p class="page-sub">Customize your in-game appearance</p>
-          </div>
-          <div id="cos-equipped-badge" class="cos-eq-badge hidden">
-            <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12"><path d="M6.5 11.5L3 8l1-1 2.5 2.5 5-5 1 1z"/></svg>
-            <span id="cos-equipped-name">No Cape</span>
-          </div>
-        </div>
-
-        <div class="cos-cat-tabs">
-          <button class="cos-cat active" data-cat="capes">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M5 8H3v7h2V8zm6 0H9v7h2V8zm8 9H1v2h18v-2zM7.5 1L1 5.5v1.5h18V5.5L12.5 1 10 3 7.5 1z"/></svg>
-            Capes
-          </button>
-          <button class="cos-cat cos-locked" data-cat="wings" disabled>
-            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M18 3L2 9.5v.9l5.7 2.2 2.4 5.9h.9L18 3z"/></svg>
-            Wings
-            <span class="soon-tag">Soon</span>
-          </button>
-          <button class="cos-cat cos-locked" data-cat="hats" disabled>
-            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm-2 11.5V9l5 2.5-5 2z"/></svg>
-            Hats
-            <span class="soon-tag">Soon</span>
-          </button>
-        </div>
-
-        <div class="cos-body">
-          <div id="cape-grid" class="cape-grid"></div>
-
-          <div class="cos-panel">
-            <div class="cos-panel-title">Preview</div>
-            <div class="player-preview">
-              <div class="player-figure">
-                <div class="player-head"></div>
-                <div class="player-body">
-                  <div class="player-arm left"></div>
-                  <div class="player-arm right"></div>
-                  <div id="cape-preview-swatch" class="player-cape"></div>
-                </div>
-                <div class="player-legs">
-                  <div class="player-leg"></div>
-                  <div class="player-leg"></div>
-                </div>
-              </div>
-            </div>
-            <div id="preview-name" class="preview-name">Select a cape</div>
-            <div id="preview-desc" class="preview-desc">—</div>
-            <button id="btn-equip-cape" class="equip-btn" disabled>Equip Cape</button>
-            <div id="equip-status" class="equip-status hidden"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ▓▓ SETTINGS PAGE ▓▓ -->
-    <div id="page-settings" class="page">
-      <div class="inner-page-wrap">
-        <div class="inner-page-top">
-          <div>
-            <h2 class="page-title">Settings</h2>
-            <p class="page-sub">Configure your launcher and Minecraft environment</p>
-          </div>
-        </div>
-
-        <div class="settings-grid">
-          <div class="glass-card s-card">
-            <div class="s-card-head">
-              <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12zM9 7v4l3 1.5-.7 1.3-3.8-1.9V7H9z"/></svg>
-              Performance
-            </div>
-            <div class="s-field">
-              <label class="s-label">RAM Allocation</label>
-              <div class="ram-row">
-                <input type="range" id="ram-slider" min="512" max="16384" step="512" value="2048" class="xrange">
-                <div class="ram-bubble" id="ram-bubble">2048 MB</div>
-              </div>
-              <div class="ram-marks">
-                <span>512 MB</span><span>4 GB</span><span>8 GB</span><span>16 GB</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-card s-card">
-            <div class="s-card-head">
-              <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M2 5a2 2 0 012-2h3.586L9 4.414A2 2 0 0010.414 5H16a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"/></svg>
-              Paths
-            </div>
-            <div class="s-field">
-              <label class="s-label">Game Directory</label>
-              <div class="path-row">
-                <input type="text" id="gamedir-input" class="xpath" placeholder="%APPDATA%\.minecraft">
-                <button class="ghost-btn" id="btn-browse-dir">Browse</button>
-              </div>
-            </div>
-            <div class="s-sep"></div>
-            <div class="s-field">
-              <label class="s-label">Java Executable</label>
-              <div class="path-row">
-                <input type="text" id="java-input" class="xpath" placeholder="Auto-detect">
-                <button class="ghost-btn" id="btn-browse-java">Browse</button>
-              </div>
-              <div class="s-hint">Java 17+ for 1.17+ · Java 21 recommended</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="save-row">
-          <button class="accent-btn" id="btn-save">Save Settings</button>
-          <span id="save-ok" class="save-ok hidden">✓ Settings saved</span>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /pages-wrapper -->
-
-  <!-- ░░ Status bar ░░ -->
-  <footer id="statusbar">
-    <div class="status-left">
-      <span class="status-dot pulse"></span>
-      <span class="status-text">Ready to launch</span>
-    </div>
-    <div class="status-center">
-      <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12" opacity=".4"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 2a6 6 0 110 12A6 6 0 018 2z"/></svg>
-    </div>
-    <div class="status-right">
-      <span class="status-ver">v1.0.0</span>
-      <span class="status-sep">·</span>
-      <span class="status-brand">XNVD 2025</span>
-    </div>
-  </footer>
+    </div><!-- /main-content -->
+  </div><!-- /app-shell -->
 
   <!-- ░░ Update modal ░░ -->
   <div id="update-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
@@ -506,7 +542,7 @@
       <div id="modal-notes" class="modal-notes"></div>
       <div class="modal-foot">
         <button id="btn-modal-download" class="accent-btn" style="width:100%">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M13 8V2H7v6H4l6 6 6-6h-3zM2 17h16v2H2v-2z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M13 8V2H7v6H4l6 6 6-6h-3zM2 17h16v2H2v-2z"/></svg>
           Download Update
         </button>
       </div>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{
+      width:460px;height:280px;
+      background:transparent;overflow:hidden;
+      font-family:-apple-system,'Segoe UI','Helvetica Neue',sans-serif;
+      -webkit-font-smoothing:antialiased;
+    }
+    .card{
+      position:absolute;inset:8px;
+      background:linear-gradient(150deg,#080f14 0%,#050c0a 55%,#070d15 100%);
+      border:1px solid rgba(0,255,135,0.18);
+      border-radius:18px;
+      box-shadow:0 28px 80px rgba(0,0,0,0.9),0 0 0 1px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.04);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      overflow:hidden;
+    }
+    /* ambient glows */
+    .glow-tl{position:absolute;top:-50px;left:-50px;width:220px;height:220px;
+      background:radial-gradient(circle,rgba(0,255,135,0.07) 0%,transparent 65%);pointer-events:none;}
+    .glow-br{position:absolute;bottom:-40px;right:-40px;width:180px;height:180px;
+      background:radial-gradient(circle,rgba(30,100,255,0.06) 0%,transparent 60%);pointer-events:none;}
+    /* pixel scanline overlay */
+    .card::after{
+      content:'';position:absolute;inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 3px);
+      pointer-events:none;border-radius:18px;
+    }
+    .inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
+    .logo{
+      font-size:58px;font-weight:900;letter-spacing:6px;
+      color:#deeae4;line-height:1;margin-bottom:5px;
+      text-shadow:0 0 40px rgba(0,255,135,0.15);
+    }
+    .logo .x{color:#00ff87;text-shadow:0 0 30px rgba(0,255,135,0.5);}
+    .tagline{
+      font-size:9px;font-weight:700;letter-spacing:7px;text-transform:uppercase;
+      color:rgba(255,255,255,0.22);margin-bottom:36px;
+    }
+    .bar-track{
+      width:190px;height:2px;
+      background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;
+    }
+    .bar-fill{
+      height:100%;background:linear-gradient(90deg,#009950,#00ff87,#00cc6a);
+      border-radius:1px;animation:loadup 2.8s cubic-bezier(0.15,0,0.75,1) forwards;
+    }
+    @keyframes loadup{
+      0%{width:0%} 15%{width:28%} 40%{width:54%} 65%{width:74%}
+      82%{width:85%} 95%{width:93%} 100%{width:100%}
+    }
+    .status{
+      font-size:9.5px;color:rgba(255,255,255,0.18);margin-top:11px;
+      letter-spacing:1.5px;text-transform:uppercase;
+    }
+    .dots span{animation:blink 1.4s infinite;opacity:0;}
+    .dots span:nth-child(2){animation-delay:0.25s;}
+    .dots span:nth-child(3){animation-delay:0.5s;}
+    @keyframes blink{0%,70%,100%{opacity:0}35%{opacity:1}}
+    .ver{
+      position:absolute;bottom:14px;right:18px;
+      font-size:9px;color:rgba(255,255,255,0.12);letter-spacing:.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="glow-tl"></div>
+    <div class="glow-br"></div>
+    <div class="inner">
+      <div class="logo"><span class="x">X</span>NVD</div>
+      <div class="tagline">Launcher</div>
+      <div class="bar-track"><div class="bar-fill"></div></div>
+      <div class="status">
+        Initializing<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+      </div>
+    </div>
+    <div class="ver">v1.0.0</div>
+  </div>
+</body>
+</html>

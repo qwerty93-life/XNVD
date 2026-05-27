@@ -125,23 +125,31 @@ async function doLogout() {
 async function loadVersions() {
   const list = await window.api.invoke('versions:list');
   S.versions = list;
+  // Restore last used version
+  const saved = await window.api.invoke('store:get', 'lastVersion');
+  S._savedVersion = saved || null;
   renderVersionList();
 }
 
 function renderVersionList() {
   const showSnap = $('show-snapshots').checked;
   const filtered = S.versions.filter(v => v.type === 'release' || (showSnap && v.type === 'snapshot'));
-  const cur = $('version-select').value;
+  const cur = $('version-select').value || S._savedVersion;
   $('version-select').innerHTML = filtered
     .map(v => `<option value="${v.id}">${v.id}${v.type === 'snapshot' ? ' ✦' : ''}</option>`)
     .join('');
   if (cur && filtered.find(v => v.id === cur)) $('version-select').value = cur;
+  updateInstanceDisplay();
   checkInstalled();
 }
 
 function wireVersionUI() {
   $('show-snapshots').onchange = renderVersionList;
   $('version-select').onchange = async () => {
+    const ver = $('version-select').value;
+    // Persist last selected version
+    window.api.invoke('store:set', 'lastVersion', ver);
+    updateInstanceDisplay();
     checkInstalled();
     if ($('use-fabric').checked) loadFabricVersions();
   };
@@ -149,6 +157,7 @@ function wireVersionUI() {
     const on = $('use-fabric').checked;
     $('fabric-select').disabled = !on;
     if (on) await loadFabricVersions();
+    updateInstanceDisplay();
     checkInstalled();
   };
   $('fabric-select').onchange = checkInstalled;
@@ -318,6 +327,24 @@ function logLine(text, cls = '') {
   while (out.children.length > 600) out.removeChild(out.firstChild);
 }
 
+// ── Instance display ──────────────────────────────────────────────────────────
+function updateInstanceDisplay() {
+  const ver = $('version-select').value;
+  const useFabric = $('use-fabric').checked;
+
+  // Sidebar instance card (active instance row)
+  const el = document.querySelector('.instance-item.inst-active .inst-name');
+  const verEl = document.querySelector('.instance-item.inst-active .inst-ver');
+  if (el)    el.textContent    = `${ver || 'None'}${useFabric ? ' — Fabric' : ' — Vanilla'}`;
+  if (verEl) verEl.textContent = useFabric ? 'Fabric Loader' : 'Release';
+
+  // Hero banner version text
+  const heroVer = document.querySelector('.hero-ver-text');
+  if (heroVer) heroVer.textContent = ver
+    ? `${ver}${useFabric ? ' · Fabric Loader' : ' · Vanilla'}`
+    : 'Loading versions…';
+}
+
 // ── State helpers ─────────────────────────────────────────────────────────────
 function setInstalling(v) {
   S.installing = v;
@@ -379,65 +406,102 @@ async function runSearch(overrideQuery) {
   renderBrowseGrid(results);
 }
 
+function makeFallbackIcon(title) {
+  const el = document.createElement('div');
+  el.className = 'mod-icon-fallback';
+  el.textContent = (title || '?').charAt(0).toUpperCase();
+  return el;
+}
+
 function renderBrowseGrid(results) {
   const grid = $('browse-grid');
   if (!results || results.length === 0) {
     grid.innerHTML = `
       <div class="mods-empty">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <svg viewBox="0 0 40 40" fill="none" width="40" height="40"><circle cx="18" cy="18" r="12" stroke="currentColor" stroke-width="2"/><line x1="27" y1="27" x2="37" y2="37" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <p>No mods found. Try a different search term.</p>
       </div>`;
     return;
   }
 
   grid.innerHTML = results.map(mod => `
-    <div class="mod-card" data-slug="${mod.slug}">
+    <div class="mod-card fadein" data-slug="${esc(mod.slug)}">
       <div class="mod-card-head">
         ${mod.iconUrl
-          ? `<img class="mod-icon" src="${mod.iconUrl}" alt="" onerror="this.replaceWith(makeFallbackIcon('${mod.title}'))">`
-          : `<div class="mod-icon-fallback">${mod.title.charAt(0)}</div>`
-        }
+          ? `<img class="mod-icon" src="${esc(mod.iconUrl)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=mod-icon-fallback>${esc(mod.title.charAt(0))}</div>'">`
+          : `<div class="mod-icon-fallback">${esc(mod.title.charAt(0))}</div>`}
         <div class="mod-card-meta">
           <div class="mod-title">${esc(mod.title)}</div>
           <div class="mod-author">by ${esc(mod.author)}</div>
         </div>
       </div>
       <div class="mod-desc">${esc(mod.description)}</div>
+      <div class="mod-ver-row">
+        <label class="mod-ver-label">Version</label>
+        <select class="mod-ver-select xselect" data-slug="${esc(mod.slug)}" data-loaded="false">
+          <option value="latest">Latest compatible</option>
+        </select>
+      </div>
       <div class="mod-footer">
         <span class="mod-downloads">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path d="M13 8V2H7v6H4l6 6 6-6h-3zM2 17h16v2H2v-2z"/></svg>
           ${fmtNum(mod.downloads)}
         </span>
         <button class="mod-install-btn ${mod.installed ? 'installed' : ''}"
-          data-slug="${mod.slug}"
-          onclick="installMod('${mod.slug}', this)"
+          data-slug="${esc(mod.slug)}"
+          onclick="installMod('${esc(mod.slug)}', this)"
           ${mod.installed ? 'disabled' : ''}>
-          ${mod.installed ? '✓ Installed' : 'Install'}
+          ${mod.installed ? '✓ Installed' : '⬇ Install'}
         </button>
       </div>
     </div>
   `).join('');
+
+  // Lazy-load mod versions when version select is first clicked
+  grid.querySelectorAll('.mod-ver-select').forEach(sel => {
+    sel.addEventListener('mousedown', async () => {
+      if (sel.dataset.loaded === 'true') return;
+      sel.dataset.loaded = 'true';
+      const slug = sel.dataset.slug;
+      const gameVersion = $('version-select').value;
+      sel.innerHTML = '<option>Loading…</option>';
+      const versions = await window.api.invoke('mods:versions', { slug, gameVersion });
+      sel.innerHTML = '<option value="latest">Latest compatible</option>';
+      versions.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = `${v.versionNumber}${i === 0 ? ' ★' : ''}`;
+        sel.appendChild(opt);
+      });
+    }, { once: true });
+  });
 }
 
 async function installMod(slug, btn) {
   if (!$('version-select').value) return alert('Select a Minecraft version first.');
-  btn.textContent = 'Installing...';
+
+  const card = btn.closest('.mod-card');
+  const verSel = card?.querySelector('.mod-ver-select');
+  const versionId = verSel?.value === 'latest' ? null : (verSel?.value || null);
+
+  btn.innerHTML = '<span class="btn-spinner"></span> Installing…';
   btn.className = 'mod-install-btn installing';
   btn.disabled = true;
 
   const gameDir = S.settings.gameDir || await window.api.invoke('game:getDir');
   const version = $('version-select').value;
-  const res = await window.api.invoke('mods:install', { slug, gameVersion: version, gameDir });
+  const res = await window.api.invoke('mods:install', { slug, gameVersion: version, gameDir, versionId });
 
   if (res.success) {
-    btn.textContent = '✓ Installed';
+    btn.innerHTML = '✓ Installed';
     btn.className = 'mod-install-btn installed';
     refreshInstalledBadge();
   } else {
-    btn.textContent = 'Failed';
-    btn.className = 'mod-install-btn';
+    btn.innerHTML = '✗ Failed';
+    btn.className = 'mod-install-btn failed';
     btn.disabled = false;
-    alert(`Install failed:\n${res.error}`);
+    setTimeout(() => { btn.innerHTML = '⬇ Install'; btn.className = 'mod-install-btn'; }, 2500);
+    console.error('Install failed:', res.error);
   }
 }
 
@@ -448,19 +512,27 @@ async function refreshInstalledList() {
   refreshInstalledBadge(list.length);
 
   if (list.length === 0) {
-    el.innerHTML = `
-      <div class="installed-empty">
-        <p>No mods installed yet.<br>Use the Browse tab to find and install mods.</p>
-      </div>`;
+    el.innerHTML = `<div class="installed-empty">
+      <svg viewBox="0 0 40 40" fill="none" width="36" height="36"><rect x="8" y="12" width="24" height="20" rx="2" stroke="currentColor" stroke-width="2"/><path d="M14 12V9a6 6 0 0112 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <p>No mods installed.<br>Browse the Modrinth library above.</p>
+    </div>`;
     return;
   }
 
   el.innerHTML = list.map(m => `
-    <div class="installed-item">
-      <div class="installed-icon">📦</div>
-      <div class="installed-name" title="${esc(m.filename)}">${esc(m.filename.replace(/\.jar$/, ''))}</div>
+    <div class="installed-item fadein">
+      <div class="installed-icon">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 7a1 1 0 00-1 1v6.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L16 14.586V8a1 1 0 00-1-1z"/></svg>
+      </div>
+      <div class="installed-info">
+        <div class="installed-name" title="${esc(m.filename)}">${esc(m.filename.replace(/\.jar$/, '').replace(/-[0-9+.]+$/, ''))}</div>
+        <div class="installed-filename">${esc(m.filename)}</div>
+      </div>
       <span class="installed-size">${m.sizeStr}</span>
-      <button class="remove-btn" onclick="removeMod('${esc(m.filename)}', this)">Remove</button>
+      <button class="remove-btn" onclick="removeMod('${esc(m.filename)}', this)">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/></svg>
+        Remove
+      </button>
     </div>
   `).join('');
 }
@@ -480,7 +552,8 @@ async function refreshInstalledBadge(count) {
     const list = await window.api.invoke('mods:installed', gameDir);
     count = list.length;
   }
-  $('installed-badge').textContent = count;
+  // Empty string hides badge (CSS: .nav-badge:empty { display:none })
+  $('installed-badge').textContent = count > 0 ? count : '';
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────

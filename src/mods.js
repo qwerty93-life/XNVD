@@ -72,10 +72,40 @@ async function getModFile(slugOrId, gameVersion) {
   return { url: primary.url, filename: primary.filename };
 }
 
-async function installMod(slugOrId, gameVersion, gameDir) {
+/** Fetch all available Fabric versions for a mod on a given MC version */
+async function getModVersions(slugOrId, gameVersion) {
+  const params = new URLSearchParams({
+    game_versions: JSON.stringify([gameVersion]),
+    loaders: JSON.stringify(['fabric'])
+  });
+  const versions = await fetchJson(`${MODRINTH}/project/${slugOrId}/version?${params}`);
+  if (!Array.isArray(versions)) return [];
+  return versions.map((v, i) => ({
+    id:            v.id,
+    versionNumber: v.version_number,
+    gameVersions:  v.game_versions,
+    downloads:     v.downloads,
+    datePublished: v.date_published,
+    isLatest:      i === 0
+  }));
+}
+
+/** Install by versionId (specific) or latest for gameVersion */
+async function installMod(slugOrId, gameVersion, gameDir, versionId = null) {
   const modsDir = path.join(gameDir, 'mods');
   fs.mkdirSync(modsDir, { recursive: true });
-  const dl = await getModFile(slugOrId, gameVersion);
+
+  let dl;
+  if (versionId) {
+    const ver = await fetchJson(`${MODRINTH}/version/${versionId}`);
+    if (!ver) throw new Error('Version not found');
+    const primary = ver.files.find(f => f.primary) || ver.files[0];
+    if (!primary) throw new Error('No file in this version');
+    dl = { url: primary.url, filename: primary.filename };
+  } else {
+    dl = await getModFile(slugOrId, gameVersion);
+  }
+
   if (!dl) throw new Error(`No Fabric build found for ${slugOrId} on ${gameVersion}`);
   const dest = path.join(modsDir, dl.filename);
   if (!fs.existsSync(dest)) await downloadFile(dl.url, dest);
@@ -113,4 +143,4 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-module.exports = { searchMods, installMod, isModInstalled, getInstalledMods, removeMod, formatBytes };
+module.exports = { searchMods, getModVersions, installMod, isModInstalled, getInstalledMods, removeMod, formatBytes };
