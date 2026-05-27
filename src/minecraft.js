@@ -290,7 +290,18 @@ function resolveArg(arg, vars) {
   return arg.replace(/\$\{(\w+)\}/g, (_, key) => vars[key] !== undefined ? vars[key] : '');
 }
 
-async function launch({ version, useFabric, account, gameDir: customGameDir, ram, javaPath: customJava }, onLog) {
+// Return the newest crash report path, or null
+function getLatestCrashReport(gameDir) {
+  const crashDir = path.join(gameDir, 'crash-reports');
+  if (!fs.existsSync(crashDir)) return null;
+  const files = fs.readdirSync(crashDir)
+    .filter(f => f.endsWith('.txt'))
+    .map(f => ({ name: f, mtime: fs.statSync(path.join(crashDir, f)).mtimeMs }))
+    .sort((a, b) => b.mtime - a.mtime);
+  return files.length > 0 ? path.join(crashDir, files[0].name) : null;
+}
+
+async function launch({ version, useFabric, account, gameDir: customGameDir, ram, javaPath: customJava, customJvmArgs, width, height }, onLog) {
   const gameDir = customGameDir || getGameDir();
 
   let launchId = version;
@@ -312,28 +323,43 @@ async function launch({ version, useFabric, account, gameDir: customGameDir, ram
     profile = mergeProfiles(parent, profile);
   }
 
-  // Build classpath
+  // ── Build classpath (deduplicated) ───────────────────────────────────────────
+  // Fabric + vanilla both include ASM but at different versions.
+  // mergeProfiles() puts Fabric libs FIRST, so when we keep the first entry
+  // per group/name key the newer Fabric ASM wins and the old vanilla one is
+  // dropped — eliminating the "duplicate ASM classes" ExceptionInInitializerError.
   const sep = process.platform === 'win32' ? ';' : ':';
-  const cpParts = [];
+  const cpMap = new Map();      // key: "group/name"  → value: absolute jar path
+  const librariesBase = path.join(gameDir, 'libraries');
 
   for (const lib of (profile.libraries || [])) {
     if (!ruleAllowed(lib.rules)) continue;
+
+    let jarPath = null;
+    let libKey  = null;
+
     const artifact = lib.downloads?.artifact;
     if (artifact) {
-      const p = path.join(gameDir, 'libraries', artifact.path);
-      if (fs.existsSync(p)) cpParts.push(p);
-      continue;
-    }
-    if (lib.name) {
+      jarPath = path.join(librariesBase, artifact.path);
+      // artifact.path looks like "org/ow2/asm/asm/9.9/asm-9.9.jar"
+      // key = everything except the last two segments (version dir + jar name)
+      const segs = artifact.path.replace(/\\/g, '/').split('/');
+      libKey = segs.slice(0, -2).join('/');
+    } else if (lib.name) {
       const parts = lib.name.split(':');
       const group = parts[0].replace(/\./g, '/');
-      const name = parts[1];
-      const ver = parts[2];
-      const p = path.join(gameDir, 'libraries', group, name, ver, `${name}-${ver}.jar`);
-      if (fs.existsSync(p)) cpParts.push(p);
+      const name  = parts[1];
+      const ver   = parts[2];
+      jarPath = path.join(librariesBase, group, name, ver, `${name}-${ver}.jar`);
+      libKey  = `${group}/${name}`;
+    }
+
+    if (jarPath && libKey && fs.existsSync(jarPath) && !cpMap.has(libKey)) {
+      cpMap.set(libKey, jarPath);
     }
   }
 
+  const cpParts = [...cpMap.values()];
   const clientJar = path.join(gameDir, 'versions', version, `${version}.jar`);
   if (fs.existsSync(clientJar)) cpParts.push(clientJar);
 
@@ -405,6 +431,12 @@ async function launch({ version, useFabric, account, gameDir: customGameDir, ram
     }
   }
 
+  // User-defined extra JVM flags (from Settings → Custom JVM Args)
+  if (customJvmArgs && customJvmArgs.trim()) {
+    const extra = customJvmArgs.trim().split(/\s+/).filter(Boolean);
+    jvmArgs.push(...extra);
+  }
+
   jvmArgs.push('-cp', classpath);
 
   const mainClass = profile.mainClass;
@@ -438,6 +470,11 @@ async function launch({ version, useFabric, account, gameDir: customGameDir, ram
     }
   }
 
+  // Window resolution (appended AFTER argument-list game args)
+  if (width && height) {
+    gameArgs.push('--width', String(width), '--height', String(height));
+  }
+
   const fullArgs = [...jvmArgs, mainClass, ...gameArgs];
 
   onLog(`[XNVD] Java: ${javaExe}`);
@@ -454,8 +491,22 @@ async function launch({ version, useFabric, account, gameDir: customGameDir, ram
   proc.stdout.on('data', d => onLog(d.toString().trimEnd()));
   proc.stderr.on('data', d => onLog(d.toString().trimEnd()));
   proc.on('error', e => onLog(`[ERROR] ${e.message}`));
-  proc.on('exit', code => onLog(`[XNVD] Game exited (code ${code})`));
+  proc.on('exit', code => {
+    onLog(`[XNVD] Game exited (code ${code})`);
+    // Attempt to surface latest crash report on non-zero exit
+    if (code !== 0 && code !== null) {
+      const report = getLatestCrashReport(gameDir);
+      if (report) {
+        onLog(`[XNVD] Crash report: ${report}`);
+        try {
+          const lines = fs.readFileSync(report, 'utf8').split('\n').slice(0, 30).join('\n');
+          onLog('[XNVD] --- Crash Report (first 30 lines) ---');
+          onLog(lines);
+        } catch {}
+      }
+    }
+  });
   proc.unref();
 }
 
-module.exports = { getVersionList, getFabricVersions, install, launch, isInstalled, getGameDir };
+module.exports = { getVersionList, getFabricVersions, install, launch, isInstalled, getGameDir, getLatestCrashReport };

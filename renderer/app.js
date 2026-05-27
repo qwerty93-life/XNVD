@@ -27,8 +27,18 @@ async function boot() {
   wireConsole();
   wireMods();
   await wireCosmetics();
-  wireServers();
+  wireScreenshots();
   wireUpdater();
+}
+
+// ── Screenshots ────────────────────────────────────────────────────────────────
+function wireScreenshots() {
+  const btn = $('btn-screenshots');
+  if (!btn) return;
+  btn.onclick = async () => {
+    const gameDir = S.settings.gameDir || await window.api.invoke('game:getDir');
+    await window.api.invoke('game:openScreenshots', gameDir);
+  };
 }
 
 // ── Window controls ────────────────────────────────────────────────────────────
@@ -91,6 +101,7 @@ function setAccount(acct) {
     setAccountUI(null);
   }
   updatePlayBtn();
+  updateCosmeticsSkin();   // refresh skin preview whenever account changes
 }
 
 function setAccountUI(acct) {
@@ -263,17 +274,27 @@ async function doGetMods() {
 
 async function doPlay() {
   if (S.installing || S.running) return;
-  const version = $('version-select').value;
+  const version   = $('version-select').value;
   const useFabric = $('use-fabric').checked;
-  const gameDir = S.settings.gameDir || undefined;
-  const ram = S.settings.ram;
-  const javaPath = S.settings.javaPath || undefined;
+  const gameDir   = S.settings.gameDir  || undefined;
+  const ram       = S.settings.ram;
+  const javaPath  = S.settings.javaPath || undefined;
+
+  // Extra game args from settings
+  const extraGameArgs = [];
+  if (S.settings.fullscreen) extraGameArgs.push('--fullscreen');
 
   setRunning(true);
   openConsole();
   logLine('[XNVD] Starting Minecraft...', 'xnvd');
 
-  const res = await window.api.invoke('game:launch', { version, useFabric, gameDir, ram, javaPath });
+  const res = await window.api.invoke('game:launch', {
+    version, useFabric, gameDir, ram, javaPath,
+    width:      S.settings.width  || null,
+    height:     S.settings.height || null,
+    fullscreen: S.settings.fullscreen || false,
+  });
+
   if (!res.success) {
     logLine(`[ERROR] ${res.error}`, 'err');
     setRunning(false);
@@ -480,29 +501,48 @@ function renderBrowseGrid(results) {
 async function installMod(slug, btn) {
   if (!$('version-select').value) return alert('Select a Minecraft version first.');
 
+  // Guard: already installing this card
+  if (btn.dataset.busy === '1') return;
+  btn.dataset.busy = '1';
+
   const card = btn.closest('.mod-card');
   const verSel = card?.querySelector('.mod-ver-select');
   const versionId = verSel?.value === 'latest' ? null : (verSel?.value || null);
 
-  btn.innerHTML = '<span class="btn-spinner"></span> Installing…';
-  btn.className = 'mod-install-btn installing';
-  btn.disabled = true;
+  // → Installing state
+  const prevHtml = btn.innerHTML;
+  btn.innerHTML   = '<span class="btn-spinner"></span> Installing…';
+  btn.className   = 'mod-install-btn installing';
+  btn.disabled    = true;
 
-  const gameDir = S.settings.gameDir || await window.api.invoke('game:getDir');
-  const version = $('version-select').value;
-  const res = await window.api.invoke('mods:install', { slug, gameVersion: version, gameDir, versionId });
+  try {
+    const gameDir = S.settings.gameDir || await window.api.invoke('game:getDir');
+    const version = $('version-select').value;
+    const res = await window.api.invoke('mods:install', { slug, gameVersion: version, gameDir, versionId });
 
-  if (res.success) {
-    btn.innerHTML = '✓ Installed';
-    btn.className = 'mod-install-btn installed';
-    refreshInstalledBadge();
-  } else {
+    if (res.success) {
+      btn.innerHTML = '✓ Installed';
+      btn.className = 'mod-install-btn installed';
+      btn.disabled  = true;   // stay disabled — no double-install
+      refreshInstalledBadge();
+    } else {
+      throw new Error(res.error || 'Unknown error');
+    }
+  } catch (err) {
+    console.error('Mod install error:', err);
     btn.innerHTML = '✗ Failed';
     btn.className = 'mod-install-btn failed';
-    btn.disabled = false;
-    setTimeout(() => { btn.innerHTML = '⬇ Install'; btn.className = 'mod-install-btn'; }, 2500);
-    console.error('Install failed:', res.error);
+    btn.disabled  = false;
+    // Auto-reset to Install after 3 s
+    setTimeout(() => {
+      btn.innerHTML = prevHtml;
+      btn.className = 'mod-install-btn';
+      delete btn.dataset.busy;
+    }, 3000);
+    return;
   }
+
+  delete btn.dataset.busy;
 }
 
 async function refreshInstalledList() {
@@ -563,14 +603,17 @@ async function loadSettings() {
 }
 
 function wireSettings() {
-  $('ram-slider').value = S.settings.ram;
-  $('ram-bubble').textContent = `${S.settings.ram} MB`;
-  $('gamedir-input').value = S.settings.gameDir || '';
-  $('java-input').value = S.settings.javaPath || '';
+  $('ram-slider').value           = S.settings.ram || 2048;
+  $('ram-bubble').textContent     = `${S.settings.ram || 2048} MB`;
+  $('gamedir-input').value        = S.settings.gameDir    || '';
+  $('java-input').value           = S.settings.javaPath   || '';
+  $('jvm-args-input').value       = S.settings.customJvmArgs || '';
+  $('res-width').value            = S.settings.width      || '';
+  $('res-height').value           = S.settings.height     || '';
+  $('fullscreen-toggle').checked  = S.settings.fullscreen || false;
 
   $('ram-slider').oninput = () => {
-    const v = $('ram-slider').value;
-    $('ram-bubble').textContent = `${v} MB`;
+    $('ram-bubble').textContent = `${$('ram-slider').value} MB`;
   };
 
   $('btn-browse-dir').onclick = async () => {
@@ -584,15 +627,20 @@ function wireSettings() {
   };
 
   $('btn-save').onclick = async () => {
+    const w = parseInt($('res-width').value)  || null;
+    const h = parseInt($('res-height').value) || null;
     S.settings = {
-      ram: parseInt($('ram-slider').value),
-      gameDir: $('gamedir-input').value.trim(),
-      javaPath: $('java-input').value.trim()
+      ram:           parseInt($('ram-slider').value),
+      gameDir:       $('gamedir-input').value.trim(),
+      javaPath:      $('java-input').value.trim(),
+      customJvmArgs: $('jvm-args-input').value.trim(),
+      width:         w && w >= 640  ? w : null,
+      height:        h && h >= 480  ? h : null,
+      fullscreen:    $('fullscreen-toggle').checked,
     };
     await window.api.invoke('store:set', 'settings', S.settings);
-    const ok = $('save-ok');
-    ok.classList.remove('hidden');
-    setTimeout(() => ok.classList.add('hidden'), 2500);
+    $('save-ok').classList.remove('hidden');
+    setTimeout(() => $('save-ok').classList.add('hidden'), 2500);
     checkInstalled();
   };
 }
@@ -665,6 +713,7 @@ async function wireCosmetics() {
   renderCapeGrid();
   updateCapePreview(S.selectedCape);
   updateEquippedBadge();
+  updateCosmeticsSkin();
 
   $('btn-equip-cape').onclick = async () => {
     const btn = $('btn-equip-cape');
@@ -717,11 +766,40 @@ function renderCapeGrid() {
 
 function updateCapePreview(capeId) {
   const cape = S.capes.find(c => c.id === capeId) || S.capes[0];
-  $('preview-name').textContent = cape.name;
-  $('preview-desc').textContent = cape.desc || '—';
+  $('preview-name').textContent = cape ? cape.name : '—';
+  $('preview-desc').textContent = cape ? (cape.desc || '—') : '—';
   const swatch = $('cape-preview-swatch');
-  swatch.style.background = capeGradientCss(cape.colors);
-  swatch.style.opacity = capeId === 'none' ? '0' : '1';
+  if (swatch && cape) {
+    swatch.style.background = capeGradientCss(cape.colors);
+    swatch.style.opacity = capeId === 'none' ? '0' : '1';
+  }
+}
+
+// Show real Minecraft skin using Crafatar body render API
+function updateCosmeticsSkin() {
+  const renderWrap  = $('skin-render-wrap');
+  const fallback    = $('player-figure-fallback');
+  const img         = $('player-skin-render');
+  if (!renderWrap || !fallback || !img) return;
+
+  if (S.account?.uuid) {
+    // Crafatar provides a pre-rendered body with the actual skin
+    const uuid = S.account.uuid.replace(/-/g, '');
+    img.src = `https://crafatar.com/renders/body/${uuid}?size=200&overlay=true&default=MHF_Steve`;
+    img.onload  = () => {
+      renderWrap.classList.remove('hidden');
+      fallback.classList.add('hidden');
+    };
+    img.onerror = () => {
+      // Fall back to CSS player if Crafatar is unreachable
+      renderWrap.classList.add('hidden');
+      fallback.classList.remove('hidden');
+    };
+  } else {
+    // Not signed in — show CSS block player
+    renderWrap.classList.add('hidden');
+    fallback.classList.remove('hidden');
+  }
 }
 
 function updateEquippedBadge() {

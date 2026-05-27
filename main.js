@@ -181,8 +181,18 @@ ipcMain.handle('mods:openFolder', (_, gameDir) => {
 ipcMain.handle('game:launch', async (_, opts) => {
   const account = store.get('account');
   if (!account) return { success: false, error: 'Not logged in' };
+  const settings = store.get('settings') || {};
   try {
-    await minecraft.launch({ ...opts, account }, log => mainWindow?.webContents.send('game:log', log));
+    await minecraft.launch(
+      {
+        ...opts,
+        account,
+        customJvmArgs: settings.customJvmArgs || '',
+        width:  settings.width  || null,
+        height: settings.height || null,
+      },
+      log => mainWindow?.webContents.send('game:log', log)
+    );
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
@@ -217,6 +227,18 @@ ipcMain.handle('cosmetics:equip', (_, { capeId, gameDir }) => {
   } catch (err) {
     return { success: false, error: err.message };
   }
+});
+
+// ── Screenshots / crash report ────────────────────────────────────────────────
+ipcMain.handle('game:openScreenshots', (_, gameDir) => {
+  const dir = path.join(gameDir || minecraft.getGameDir(), 'screenshots');
+  fs.mkdirSync(dir, { recursive: true });
+  shell.openPath(dir);
+  return true;
+});
+
+ipcMain.handle('game:latestCrash', (_, gameDir) => {
+  return minecraft.getLatestCrashReport(gameDir || minecraft.getGameDir());
 });
 
 // ── Dialogs ───────────────────────────────────────────────────────────────────
